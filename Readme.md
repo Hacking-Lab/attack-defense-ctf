@@ -15,3 +15,6 @@ Setup cloud based attack and defense CTF on Exocloud https://www.exoscale.com fo
 ## Terra-Form
 Thius project provides infrastructure as code to provision and manage any cloud, infrastructure, or service
 * https://www.terraform.io/
+
+## ECSC 2020
+* https://github.com/Hacking-Lab/ECSC2020/
