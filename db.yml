@@ -1,0 +1,6 @@
+---
+- hosts: db
+  roles:
+    - { role: guest/network, become: yes, tags: not_for_vagrant, base }
+    - { role: common/base, become: yes, tags: base }
+    - { role: guest/gamedb, become: yes }

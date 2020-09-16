@@ -1,0 +1,5 @@
+---
+dotfiles:
+  zshrc: ".zshrc"
+  vimrc: ".vimrc"
+  tmux.conf: ".tmux.conf"

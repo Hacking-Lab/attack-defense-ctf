@@ -1,0 +1,36 @@
+---
+- name: remove default config
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ systemd_networkd_dir }}eth0-dhcp.network"
+    - "/etc/network/interfaces.d/50-cloud-init.cfg"
+  tags: not_for_vagrant
+
+- name: systemd networkd eth0 network config
+  template:
+    src: networkd/eth0.network
+    dest: "{{ systemd_networkd_dir }}"
+    mode: '0644'
+  notify: reboot
+
+- name: systemd networkd
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  with_items:
+    - systemd-networkd
+    - systemd-resolved
+
+- name: resolv.conf
+  file:
+    src: /run/systemd/resolve/resolv.conf
+    dest: /etc/resolv.conf
+    state: link
+    force: yes
+
+
+# force reboot
+- meta: flush_handlers

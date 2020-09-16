@@ -1,0 +1,6 @@
+[submodule "roles/guest/vulns/files"]
+	path = roles/guest/vulns
+	url = git@github.com:KaindorfCTF/example-challenges-ad.git
+[submodule "roles/guest/vulns"]
+	path = roles/guest/vulns
+	url = https://github.com/KaindorfCTF/example-challenges-ad

@@ -1,0 +1,84 @@
+---
+- name: run make ext
+  make:
+    chdir: /opt/game/repo
+    target: ext
+
+- name: copy prod settings
+  template:
+    src: prod_settings.py
+    dest: /opt/game
+    owner: 'www-data'
+    group: 'www-data'
+    mode: '0600'
+
+- name: copy manage script
+  copy:
+    src: manage.py
+    dest: /opt/game
+    mode: +x
+
+- name: copy site config nginx
+  template:
+    src: ctf_gameserver_nginx.conf
+    dest: /etc/nginx/sites-available/
+    mode: '0644'
+  notify: nginx restart
+
+- name: enable site
+  file:
+    src: /etc/nginx/sites-available/ctf_gameserver_nginx.conf
+    dest: /etc/nginx/sites-enabled/ctf_gameserver_nginx.conf
+    state: link
+  notify: nginx restart
+
+- user:
+    name: www-data
+    shell: "/bin/false"
+
+- name: create uwsgi logdir
+  file:
+    path: /var/log/uwsgi
+    state: directory
+    owner: www-data
+    group: www-data
+
+- name: copy uwsgi ini
+  copy:
+    src: uwsgi.ini
+    dest: /opt/game
+    mode: '0644'
+  notify: restart game.uwsgi
+
+- name: copy uwsgi systemd unit
+  copy:
+    src: game.uwsgi.service
+    dest: /etc/systemd/system
+  notify: restart game.uwsgi
+
+- name: enable uwsgi
+  service:
+    name: game.uwsgi.service
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+#- name: countries.csv dirty fix
+#  file:
+#    src: /opt/game/repo/src/ctf_gameserver/web/registration/countries.csv
+#    dest: /opt/game/ENV/lib/{{ python_version }}/site-packages/ctf_gameserver/web/registration/countries.csv
+#    state: link
+
+- name: build migrations
+  shell: "zsh -c 'source /opt/game/ENV/bin/activate && cd /opt/game/repo && make migrations'"
+
+- name: django migrate
+  django_manage:
+    command: "{{ item }}"
+    app_path: /opt/game/
+    virtualenv: /opt/game/ENV/
+  with_items:
+    - "migrate auth"
+    - "migrate"
+  tags: migrate
+

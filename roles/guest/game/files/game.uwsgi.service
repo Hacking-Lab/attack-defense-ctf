@@ -1,0 +1,17 @@
+[Unit]
+Description=uWSGI Emperor
+After=syslog.target
+
+[Service]
+User=www-data
+ExecStart=/opt/game/ENV/bin/uwsgi --ini /opt/game/uwsgi.ini
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -INT $MAINPID
+Restart=always
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+KillSignal=SIGQUIT
+
+[Install]
+WantedBy=multi-user.target

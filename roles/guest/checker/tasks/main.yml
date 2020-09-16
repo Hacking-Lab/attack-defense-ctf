@@ -1,0 +1,102 @@
+---
+- name: copy deploy key
+  copy:
+    src: files/ssh_ad/deploy
+    dest: /root/vol1
+    mode: 0600
+
+- name: install bs4
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python-beautifulsoup4
+    - python-pycryptodome
+  when: ansible_os_family == "Archlinux"
+
+- name: install bs4
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python3-bs4
+    - python3-pycryptodome
+  when: ansible_os_family == "Debian"
+
+- name: python3-pwntools
+  pip:
+    name: "git+https://github.com/arthaud/python3-pwntools.git"
+    virtualenv: /opt/game/ENV
+    virtualenv_python: python3
+
+- name: pip stuff
+  pip:
+    name: "names"
+    virtualenv: /opt/game/ENV
+    virtualenv_python: python3
+
+- name: clone ad challenges
+  git:
+    repo: "{{ ad_challenges_repo }}"
+    dest: "{{ challenges_dir }}"
+    force: True
+    accept_hostkey: true
+    key_file: /root/vol1
+
+- name: find challenges
+  find:
+    paths: "{{ challenges_dir }}"
+    file_type: directory
+  register: find_result
+  tags: enable-checker
+
+- name: print challenges
+  debug:
+    msg: "{{ find_result.files }}"
+  tags: enable-checker
+
+- name: install checker source
+  file:
+    src: "{{ item.path }}/checker/src/"
+    dest: "/opt/game/ENV/lib/{{ python_version }}/site-packages/{{ item.path | basename }}"
+    state: link
+  with_items: "{{ find_result.files }}"
+  tags: enable-checker
+
+- name: create checker config dir
+  file:
+    path: /etc/ctf-gameserver/checker/
+    state: directory
+
+- name: install checker config
+  file:
+    src: "/opt/chal/{{ item.path | basename }}/checker/conf/{{ item.path | basename }}.env"
+    dest: "/etc/ctf-gameserver/checker/{{ item.path | basename }}.env"
+    state: link
+  with_items: "{{ find_result.files }}"
+  tags: enable-checker
+
+#- name: install checker
+#  pip:
+#    name: "{{ item.path }}/checker"
+#    virtualenv: /opt/game/ENV
+#    virtualenv_python: python3
+#    extra_args: --upgrade
+#  with_items: "{{ find_result.files }}"
+
+- service:
+    daemon_reload: yes
+
+- name: enable checker
+  service:
+    name: "ctf-checkermaster@{{ item.path | basename }}.service"
+    enabled: true
+  with_items: "{{ find_result.files }}"
+  tags: enable-checker # fails if other stuff isn't started
+
+- name: start checker
+  service:
+    name: "ctf-checkermaster@{{ item.path | basename }}.service"
+    state: started
+  with_items: "{{ find_result.files }}"
+  tags: enable-checker # fails if other stuff isn't started

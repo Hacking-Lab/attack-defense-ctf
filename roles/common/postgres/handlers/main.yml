@@ -1,0 +1,5 @@
+---
+- name: postgres initdb
+  become_user: postgres
+  command: "initdb --locale en_US.UTF-8 -D '/var/lib/postgres/data'"
+  when: ansible_os_family == "Archlinux"

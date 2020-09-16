@@ -1,0 +1,87 @@
+---
+num_teams: 5
+event_start: '2020-09-02 16:20:00+00'
+event_end: '2020-10-15 14:30:00+00'
+
+CTFD_PASS: '2woHeayIiqfE4WHO3O79Fh1'
+
+CTF_FLAGSECRET: RFVNTVlTRUNSRVQ=
+CTF_SECRET: fhieapofheh932fqh3289fhaflkd
+
+teams:
+  - id: 9
+    name: 'admin'
+    email: 'admin'
+    pass: '{{ CTFD_PASS }}'
+    admin: True
+  - id: 1
+    name: 'Team 1'
+    email: 'team1'
+    pass: 'CgCZdis/moe5w'
+  - id: 2
+    name: 'Team 2'
+    email: 'team2'
+    pass: 'E9nR51VTPs7SA'
+  - id: 3
+    name: 'Team 3'
+    email: 'team3'
+    pass: '0LNYUKwfasCZy'
+  - id: 4
+    name: 'Team 4'
+    email: 'team4'
+    pass: 'Vt6ugYOXvAWCR'
+  - id: 5
+    name: 'Dummy'
+    email: 'dummy'
+    pass: 'fheshoih278344'
+    nop: True
+
+#####################
+# ctf-gameserver
+
+game:
+  enabled: true
+  port: 80
+  event_name: "ECSC 202X"
+  git_repo: https://github.com/KaindorfCTF/ctf-gameserver
+  git_version: master
+  ippattern: "10.60.%d.2"
+  db:
+    host: 194.182.186.252
+    port: 5432
+    name: game
+    user: user_game
+    pass: hfosahioehshifoew
+  checker_db:
+    host: 194.182.186.252
+    port: 5432
+    name: new_checkercache
+    user: user_checkercache
+    pass: xohefooisdkffos
+
+ad_challenges_repo: git@github.com:KaindorfCTF/example-challenges-ad.git
+
+game_services:
+  - {id: 1, name: "Test Service" , slug: "example_slug" }
+
+submission_host: 0.0.0.0
+submission_port: 1234
+
+#####################
+# misc
+
+systemd_networkd_dir: "/etc/systemd/network/"
+
+postgres_dir: '/etc/postgresql/11/main/' # Debain
+#postgres_dir: '/var/lib/postgres/data' # Arch
+
+postgres_allowed_ip: 194.182.173.254
+
+phppgadmin_dir: /usr/share/ # Debain
+#phppgadmin_dir: /usr/share/webapps/ # Arch
+
+#####################
+# ansible internal
+
+#ansible_python_interpreter: /usr/bin/python2 # because sysctl
+python_version: python3.7

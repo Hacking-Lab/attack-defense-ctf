@@ -1,0 +1,34 @@
+---
+- name: Configure PostgreSQL. Set listen_addresses.
+  lineinfile:
+    dest: '{{postgres_dir}}/postgresql.conf'
+    regexp: "listen_addresses ="
+    line: "listen_addresses = '*'"
+    state: present
+  notify: restart postgres
+
+- name: Configure PostgreSQL. Update pg_hba.conf.
+  template:
+    dest: '{{postgres_dir}}/pg_hba.conf'
+    src: "pg_hba.conf"
+  notify: restart postgres
+
+- name: create db users
+  become_user: postgres
+  postgresql_user:
+    name: "{{ item.user }}"
+    password: "{{ item.pass }}"
+    role_attr_flags: CREATEDB,CREATEROLE,SUPERUSER,REPLICATION # TODO reduce
+    encrypted: yes
+  with_items:
+    - "{{ game.db }}"
+    - "{{ game.checker_db }}"
+
+- name: create databases
+  become_user: postgres
+  postgresql_db:
+    name: "{{ item.name }}"
+    owner: "{{ item.user }}"
+  with_items:
+    - "{{ game.db }}"
+    - "{{ game.checker_db }}"

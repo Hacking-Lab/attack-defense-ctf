@@ -1,0 +1,37 @@
+---
+- name: install nginx
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - nginx
+
+- name: remove nginx default page
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: nginx config dir exits
+  file:
+    path:  "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/nginx/sites-available/
+    - /etc/nginx/sites-enabled/
+
+- name: copy config nginx
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/
+  notify: nginx restart
+
+- name: create www-data user
+  user:
+    name: www-data
+    shell: "/bin/false"
+
+- name: nginx started
+  service:
+    name: nginx
+    enabled: yes
+    state: started

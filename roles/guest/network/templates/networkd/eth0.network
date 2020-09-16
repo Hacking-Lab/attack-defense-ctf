@@ -1,0 +1,10 @@
+{% set ip = ansible_host+'/24' %}
+{% set router = (ip | ipaddr('network') | ipaddr('int')+1) | ipaddr %}
+[Match]
+Name=eth0
+
+[Network]
+Address={{ ip | ipaddr('host/prefix') }}
+Gateway={{ router }}
+DNS={{ router }}
+DNS=8.8.8.8

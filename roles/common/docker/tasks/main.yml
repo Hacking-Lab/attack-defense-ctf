@@ -1,0 +1,83 @@
+- name: Add apt-key for docker repo
+  apt_key:
+    url: "https://download.docker.com/linux/debian/gpg"
+  tags: [docker]
+  when: ansible_os_family == "Debian"
+
+- name: Add Docker repository and update apt cache
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/debian jessie stable
+    update_cache: yes
+    state: present
+  tags: [docker]
+  when: ansible_os_family == "Debian"
+
+- name: Docker is present
+  package:
+    name: docker-ce
+    state: latest
+    force: yes
+  tags: [docker]
+  when: ansible_os_family == "Debian"
+
+- name: Python-pip is present
+  apt: name=python-pip state=present
+  tags: [docker]
+  when: ansible_os_family == "Debian"
+
+- name: Update pip with pip
+  pip:
+    name: pip
+    state: latest
+  tags: [docker]
+  when: ansible_os_family == "Debian"
+
+- name: Install new docker python module
+  pip:
+    name: docker
+    state: latest
+  tags: [docker]
+  when: ansible_os_family == "Debian"
+
+- name: install for arch linux
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - docker
+    - docker-machine
+    - python2-pip
+    #- python-docker
+    - iptables
+    - python2-lxml
+  when: ansible_os_family == "Archlinux"
+
+- name: Install docker python module
+  pip:
+    executable: pip2
+    name: docker
+    state: latest
+  tags: [docker]
+  when: ansible_os_family == "Archlinux"
+
+- name: Docker service is restarted
+  service:
+    name: docker
+    state: restarted
+    enabled: true
+  #when: copy_result|changed
+  tags: [docker]
+
+- name: Make a docker registry available on localhost
+  docker_container:
+    name: registry
+    image: registry
+    state: started
+    restart: yes
+    restart_policy: always
+    recreate: yes
+    ports: 5000:5000
+    env:
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
+    volumes:
+      - /var/lib/docker-registry:/data

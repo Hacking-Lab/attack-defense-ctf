@@ -1,0 +1,36 @@
+---
+- name: create game directory
+  file:
+    path: /opt/game
+    state: directory
+    mode: '0755'
+
+- name: copy game data
+  template:
+    src: game_data.sql
+    dest: /opt/game/game_data.sql
+    mode: '0644'
+
+- name: import game data
+  become_user: postgres
+  shell: psql -d {{ game.db.name }} < /opt/game/game_data.sql
+
+- name: copy checker data
+  template:
+    src: checker_data.sql
+    dest: /opt/game/checker_data.sql
+    mode: '0644'
+
+- name: import checker data
+  become_user: postgres
+  shell: psql -d {{ game.checker_db.name }} < /opt/game/checker_data.sql
+
+- name: Download scoring.sql
+  get_url:
+    url: https://raw.githubusercontent.com/KaindorfCTF/ctf-gameserver/master/doc/controller/scoring.sql
+    dest: /opt/game/scoring.sql
+    mode: '0444'
+
+- name: create materialized view
+  become_user: postgres
+  shell: psql -d {{ game.db.name }} -f /opt/game/scoring.sql

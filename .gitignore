@@ -1,0 +1,14 @@
+__pycache__
+.vagrant
+*.bak
+*.img
+*.iso
+*.log
+*.qcow2
+*.retry
+*.swo
+*.swp
+*~
+/log
+.history
+.vscode

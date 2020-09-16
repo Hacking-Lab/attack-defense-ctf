@@ -1,0 +1,74 @@
+---
+# doc: http://ctf-gameserver.org/setup.html
+
+- set_fact:
+    systemd_lib_dir: '/usr/'
+  when: ansible_os_family == "Archlinux"
+- set_fact:
+    systemd_lib_dir: '/'
+  when: ansible_os_family == "Debian"
+
+- set_fact:
+    systemd_system_dir: '{{ systemd_lib_dir }}lib/systemd/system'
+
+- name: install generic
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - unzip # make
+    - make
+
+- name: install for debian
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python3
+    - python3-pip
+    - python3-psycopg2
+    - python-psycopg2
+    - python3-systemd
+    - libjs-bootstrap
+    - libjpeg-dev # Pillow
+    - libpq-dev # tests
+    - libmemcached-dev # django
+    - libyaml-dev # setup.py
+  when: ansible_os_family == "Debian"
+
+- name: install for archlinux
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python
+    - python-pip
+    - python-psycopg2
+    - python2-psycopg2 # ansible
+    - python-systemd
+      #- libjs-bootstrap
+      #- libjpeg-dev # Pillow
+      #- libpq-dev # tests
+    - libmemcached # django
+    - libyaml # setup.py
+    - gcc # uwsgi
+    - python-setuptools
+  when: ansible_os_family == "Archlinux"
+
+- name: install generic not for vagrant
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - curl # make
+  tags: not_for_vagrant
+
+- import_tasks: database.yml
+
+- service:
+    daemon_reload: yes
+
+- meta: flush_handlers
+
+- import_tasks: import.yml
+  tags: game-import

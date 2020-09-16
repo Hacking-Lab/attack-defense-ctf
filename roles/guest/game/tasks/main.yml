@@ -1,0 +1,219 @@
+---
+# doc: http://ctf-gameserver.org/setup.html
+
+- set_fact:
+    systemd_lib_dir: '/usr/'
+  when: ansible_os_family == "Archlinux"
+- set_fact:
+    systemd_lib_dir: '/'
+  when: ansible_os_family == "Debian"
+
+- set_fact:
+    systemd_system_dir: '{{ systemd_lib_dir }}lib/systemd/system'
+
+- name: install generic
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python-virtualenv
+    - unzip # make
+    - make
+    - memcached # django
+
+- name: install generic not for vagrant
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - curl # make
+  tags: not_for_vagrant
+
+- name: install for debian
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python3
+    - python3-pip
+    - python3-psycopg2
+    - python-psycopg2
+    - python3-systemd
+    - libjs-bootstrap
+    - libjpeg-dev # Pillow
+    - libpq-dev # tests
+    - libmemcached-dev # django
+    - libyaml-dev # setup.py
+  when: ansible_os_family == "Debian"
+
+- name: install for archlinux
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python
+    - python-pip
+    - python-psycopg2
+    - python2-psycopg2 # ansible
+    - python-systemd
+      #- libjs-bootstrap
+      #- libjpeg-dev # Pillow
+      #- libpq-dev # tests
+    - libmemcached # django
+    - libyaml # setup.py
+    - gcc # uwsgi
+    - python-setuptools
+  when: ansible_os_family == "Archlinux"
+
+- name: clone
+  git:
+    repo: "{{ game.git_repo }}"
+    dest: /opt/game/repo
+    version: "{{ game.git_version }}"
+    depth: 1
+
+#- name: install MYPACKAGE in VIRTUALENV
+#  pip:
+#    name: '/opt/game/repo'
+#    virtualenv: /opt/game/ENV
+#    virtualenv_python: python3
+#    virtualenv_site_packages: true
+
+- name: install pip requirements
+  pip:
+    name:
+      - mock # tests
+      - uwsgi # for nginx deploy
+      - ipython # for a smoother shell
+      - pylibmc # django
+      - psycopg2
+      - pyyaml
+    virtualenv: /opt/game/ENV
+    virtualenv_python: python3
+
+- name: install ctf-gameserver
+  pip:
+    name: /opt/game/repo
+    virtualenv: /opt/game/ENV
+    virtualenv_python: python3
+    extra_args: '-e'
+    #extra_args: "--root='{{ systemd_system_dir }}'"
+
+- name: start memcached
+  service:
+    name: memcached
+    enabled: yes
+    state: started
+
+- name: create ctf-checkermaster user
+  user:
+    name: ctf-checkermaster
+    shell: "/bin/false"
+
+- name: Copy file with owner and permissions
+  copy:
+    remote_src: True
+    src: '{{ item }}'
+    dest: /usr/lib/systemd/system/
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - '/opt/game/repo/conf/checker/ctf-checkermaster@.service'
+    - '/opt/game/repo/conf/controller/ctf-controller.service'
+    - '/opt/game/repo/conf/controller/ctf-flagid.service'
+    - '/opt/game/repo/conf/controller/ctf-flagid.timer'
+    - '/opt/game/repo/conf/submission/ctf-submission@.service'
+
+- name: patch systemd nobody group
+  lineinfile:
+    path: "{{systemd_system_dir}}/{{ item }}"
+    regexp: "^Group="
+    line: "Group=nobody"
+  when: ansible_os_family == "Archlinux"
+  with_items:
+    - ctf-checkermaster@.service
+    - ctf-controller.service
+    - ctf-flagid.service
+    - ctf-submission@.service
+
+- name: patch systemd checkermaster env python path
+  lineinfile:
+    path: "{{systemd_system_dir}}/{{ item }}"
+    regexp: "^Environment=PYTHONPATH="
+    line: "Environment=PYTHONPATH=/opt/game/ENV/lib/{{ python_version }}/site-packages"
+  with_items:
+    - ctf-checkermaster@.service
+
+- name: patch systemd checkermaster env path
+  lineinfile:
+    path: "{{systemd_system_dir}}/{{ item }}"
+    line: "Environment=PATH=/opt/game/ENV/bin/"
+    insertafter: "\\[Service\\]"
+  with_items:
+    - ctf-checkermaster@.service
+
+- name: patch systemd services binary path
+  lineinfile:
+    path: "{{systemd_system_dir}}/{{ item.srvfile }}"
+    regexp: "^ExecStart="
+    line: "ExecStart=/opt/game/ENV/bin/{{ item.command }}"
+  loop:
+    - { srvfile: 'ctf-checkermaster@.service', command: 'ctf-checkermaster' }
+    - { srvfile: 'ctf-controller.service',     command: 'ctf-controller' }
+    - { srvfile: 'ctf-flagid.service',         command: 'ctf-flagid' }
+    - { srvfile: 'ctf-submission@.service',    command: 'ctf-submission --port %i' }
+
+- service:
+    daemon_reload: yes
+
+- import_tasks: web.yml
+
+- meta: flush_handlers
+
+- name: create config dir
+  file:
+    path: "/etc/ctf-gameserver/"
+    state: directory
+
+- name: configs
+  template:
+    src: "{{ item }}"
+    dest: "/etc/ctf-gameserver/{{ item }}"
+    mode: '0644'
+  with_items:
+    - checkermaster.env
+    - controller.env
+    - submission.env
+    - flagid.env
+
+- name: create bin links
+  file:
+    src: /opt/game/ENV/bin/ctf-flagid
+    dest: /usr/bin/ctf-flagid
+    state: link
+
+- name: daemon-reload
+  systemd:
+    daemon-reload: true
+
+- name: enable systemd units
+  systemd:
+    name: "{{ item }}"
+    enabled: true
+  with_items:
+    - ctf-flagid.timer
+    - ctf-flagid.service
+    - "ctf-submission@{{ submission_port }}.service"
+  #when: no
+
+
+
+      #- name: start systemd units
+      #  systemd:
+      #    name: "{{ item }}"
+      #    state: started
+      #  with_items:
+      #    - ctf-controller.timer
+      #    - ctf-flagid.service
+      #    - "ctf-submission@{{ submission_port }}.service" # would fail first time

@@ -1,0 +1,102 @@
+---
+- name: system update
+  package:
+    update_cache: yes
+
+- name: update kernel
+  package:
+    name:
+    - linux
+    state: latest
+  when: ansible_os_family == "Archlinux"
+  notify: reboot
+
+- name: update kernel
+  package:
+    name:
+    - linux-base
+    state: latest
+  when: ansible_os_family == "Debian"
+  notify: reboot
+
+- name: system upgrade
+  package:
+    update_cache: yes
+    upgrade: yes
+    #upgrade_extra_args: "--noconfirm"
+  tags: system_upgrade
+
+- meta: flush_handlers
+
+- name: install
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - tmux
+    - git
+    - vim
+    - python
+    - sudo
+    - zsh
+    - ntp
+    - wget
+    - tree
+    - screen
+    - p7zip
+    - nano
+
+- name: install debian
+  package:
+    name:
+    - p7zip-full
+    state: latest
+  when: ansible_os_family == "Debian"
+
+- name: install for archlinux
+  package:
+    name:
+    - libx11
+    - gnu-netcat
+    state: latest
+  when: no
+
+- group:
+    name: wheel
+    state: present
+
+- name: copy locale.gen
+  copy:
+    src: locale.gen
+    dest: /etc/
+
+- locale_gen:
+    name: en_US.UTF-8
+    state: present
+
+- name: disable ipv6
+  sysctl:
+    name: net.ipv6.conf.all.disable_ipv6
+    value: 1
+
+- name: dotfiles
+  copy:
+    src: "{{ item.key }}"
+    dest: "/home/{{ ansible_user }}/{{ item.value }}"
+  with_dict: "{{ dotfiles }}"
+  when: ansible_user != "root"
+
+- name: dotfiles root
+  copy:
+    src: "{{ item.key }}"
+    dest: "/root/{{ item.value }}"
+  with_dict: "{{ dotfiles }}"
+
+- name: set zsh
+  become: true
+  user:
+    name: "{{ item }}"
+    shell: /bin/zsh
+  with_items:
+    - "{{ ansible_user }}"
+    - root

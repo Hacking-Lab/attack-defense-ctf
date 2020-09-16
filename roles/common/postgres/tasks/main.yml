@@ -1,0 +1,23 @@
+---
+- name: install postgresql
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - postgresql
+
+- name: access rights
+  file:
+    path: /var/lib/postgres/
+    owner: postgres
+    group: postgres
+    recurse: yes
+  notify: postgres initdb
+
+- meta: flush_handlers
+
+- name: start postgresql
+  service:
+    name: postgresql
+    enabled: true
+    state: started

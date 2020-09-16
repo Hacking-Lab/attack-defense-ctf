@@ -1,0 +1,16 @@
+
+[game]
+vm_game
+[game:vars]
+ansible_host=194.182.173.254
+ansible_ssh_private_key_file=.ssh/id_rsa.pub
+ansible_user=debian
+management_ip=194.182.173.254
+
+[db]
+vm_db
+[db:vars]
+ansible_host=194.182.186.252
+ansible_ssh_private_key_file=.ssh/id_rsa.pub
+ansible_user=debian
+management_ip=194.182.186.252

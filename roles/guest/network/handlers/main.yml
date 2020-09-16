@@ -1,0 +1,19 @@
+---
+
+- name: restart networkd
+  service:
+    name: systemd-networkd
+    state: restarted
+
+- name: reboot
+  # workaround for https://github.com/ansible/ansible/issues/14413
+  shell: "nohup bash -c 'sleep 2 && shutdown -r now' &"
+  async: 0
+  poll: 0
+  ignore_errors: true
+  notify: wait for reboot
+  tags: reboot
+
+- name: wait for reboot
+  wait_for_connection:
+    delay: 3

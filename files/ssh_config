@@ -1,0 +1,91 @@
+Host vmhost
+  HostName 192.168.42.205
+  IdentitiesOnly yes
+  User root
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vmhost
+
+Host horst
+  HostName 129.27.142.181
+  IdentitiesOnly yes
+  User root
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vmhost
+
+Host router
+  HostName 192.168.42.1
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/router
+
+Host game
+  HostName 192.168.42.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/game
+
+Host jeopardy
+  HostName 192.168.42.3
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/jeopardy
+
+Host monitoring
+  HostName 192.168.42.4
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/monitoring
+
+Host junior
+  HostName 192.168.42.5
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/junior
+
+##########################################
+
+Host vuln1
+  HostName 10.60.1.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vulnbox
+
+Host vuln2
+  HostName 10.60.2.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vulnbox
+
+Host vuln3
+  HostName 10.60.3.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vulnbox
+
+Host vuln4
+  HostName 10.60.4.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vulnbox
+
+Host vuln5
+  HostName 10.60.5.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vulnbox
+
+Host vuln6
+  HostName 10.60.6.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vulnbox
+
+Host vuln7
+  HostName 10.60.7.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vulnbox
+
+Host vuln8
+  HostName 10.60.8.2
+  IdentitiesOnly yes
+  User arch
+  IdentityFile /path/to/kaindorfctf-2020-ansible/.ssh/vulnbox
